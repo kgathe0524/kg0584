@@ -28,6 +28,12 @@ public class RentalService {
             ToolType.Ladder, new Charge(null, ToolType.Ladder, BigDecimal.valueOf(1.99), true, true, false),
             ToolType.Chainsaw, new Charge(null, ToolType.Chainsaw, BigDecimal.valueOf(1.49), true, false, true),
             ToolType.Jackhammer, new Charge(null, ToolType.Jackhammer, BigDecimal.valueOf(2.99), true, false, false));
+
+    /**
+     * Creates rental agreement from checkout request.
+     * @param checkoutRequest
+     * @return RentalAgreement
+     */
     public RentalAgreement checkout(CheckoutRequest checkoutRequest) {
         RentalAgreement rentalAgreement = new RentalAgreement(checkoutRequest);
         rentalAgreement.setDueDate(checkoutRequest.getCheckOutDate().plusDays(checkoutRequest.getRentalDayCount()));
@@ -36,6 +42,8 @@ public class RentalService {
         BigDecimal dailyCharge = CHARGES.get(rentalAgreement.getToolType()).getDailyCharge();
         rentalAgreement.setDailyRentalCharge(dailyCharge);
 
+        // Calculate and set rental day count as per weekend
+        // weekday and holiday requirement.
         setRentalDayCount(rentalAgreement);
 
         BigDecimal preDiscountCharge = rentalAgreement.getDailyRentalCharge().multiply(BigDecimal.valueOf(rentalAgreement.getChargeDays()));
@@ -49,6 +57,10 @@ public class RentalService {
         return rentalAgreement;
     }
 
+    /**
+     * It calculates and set rental day count as per weekend, weekday and holiday requirement.
+     * @param rentalAgreement
+     */
     private void setRentalDayCount(RentalAgreement rentalAgreement) {
         LocalDate rentalStartDate = rentalAgreement.getCheckOutDate();
         LocalDate rentalEndDate = rentalAgreement.getDueDate();
@@ -76,6 +88,12 @@ public class RentalService {
         rentalAgreement.setChargeDays(totalRentalDayCount);
     }
 
+    /**
+     * Checks if Independence day is falling between date range or not
+     * @param rentalStartDate
+     * @param rentalEndDate
+     * @return
+     */
     private boolean isIndependenceDayFalling(LocalDate rentalStartDate, LocalDate rentalEndDate) {
         LocalDate independenceDay = LocalDate.of(rentalStartDate.getYear(), Month.JULY, 4);
         if(DayOfWeek.SATURDAY.equals(independenceDay.getDayOfWeek())){
@@ -85,7 +103,12 @@ public class RentalService {
         }
         return independenceDay.isAfter(rentalStartDate) && independenceDay.isBefore(rentalEndDate);
     }
-
+    /**
+     * Checks if Labour day is falling between date range or not
+     * @param rentalStartDate
+     * @param rentalEndDate
+     * @return
+     */
     private boolean isLaborDayFalling(LocalDate rentalStartDate, LocalDate rentalEndDate) {
         LocalDate firstOfSeptember = LocalDate.of(rentalStartDate.getYear(), Month.SEPTEMBER, 1);
         LocalDate laborDay = firstOfSeptember.with(TemporalAdjusters.firstInMonth(DayOfWeek.MONDAY));
